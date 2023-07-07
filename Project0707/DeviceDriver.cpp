@@ -3,12 +3,21 @@
 
 using namespace std;
 
-class ReadFailException : public std::exception
+class ReadFailException : public exception
 {
 public:
 	char const* what() const override
 	{
 		return "READ Fail";
+	}
+};
+
+class WriteFailException : public exception
+{
+public:
+	char const* what() const override
+	{
+		return "WRITE Fail";
 	}
 };
 
@@ -33,5 +42,8 @@ int DeviceDriver::read(long address)
 void DeviceDriver::write(long address, int data)
 {
     // TODO: implement this method
+	unsigned char ret = m_hardware->read(address);
+	if (ret != 0xff) throw WriteFailException();
+
     m_hardware->write(address, (unsigned char)data);
 }
