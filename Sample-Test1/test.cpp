@@ -1,33 +1,48 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../Project0707//cal.cpp"
+#include "../Project0707//DeviceDriver.cpp"
 
 using namespace std;
 using namespace testing;
 
-class DBMock : public DBAPI {
+class FlashMemoryDeviceMock : public FlashMemoryDevice {
 public:
-	MOCK_METHOD(string, getDBName, (), (override));
+	MOCK_METHOD(unsigned char, read, (long address), (override));
+	MOCK_METHOD(void, write, (long address, unsigned char data), (override));
 };
 
-TEST(TestCaseName, TestName) {
-	//Mock을 사용하지 않고, LogSystem 사용방법
-	DBAPI* db = new DatabaseAPI();
-	LogSystem app(db);
-	cout << app.getLogMessage(); //DB 트래픽 발생!
+TEST(TestDeviceDriver, ReadException) {
+	FlashMemoryDeviceMock mockhardware{};
 
-	//Mock을 사용한 LogSystem 사용방법
+	EXPECT_CALL(mockhardware, read(_))
+		.Times(AtMost(5))
+		.WillOnce(Return(1))
+		.WillRepeatedly(Return(0));
 
-	//DBMock mock;
-	//EXPECT_CALL(mock, getDBName())
-	//	.WillRepeatedly(Return(string("K~F~C")));
-	//LogSystem app2(&mock);
+	DeviceDriver dd{ &mockhardware };
+	EXPECT_THROW(dd.read(0), ReadFailException);
+}
+TEST(TestDeviceDriver, TestRead5repeat) {
 
-	DBMock* mock = new DBMock();
-	EXPECT_CALL(*mock, getDBName())
-		.WillRepeatedly(Return(string("K~F~C")));
-	LogSystem app2(mock);
+	FlashMemoryDeviceMock mockhardware;
+	DeviceDriver dd(&mockhardware);
 
+	EXPECT_CALL(mockhardware, read(0))
+		.Times(5);
 
-	cout << app2.getLogMessage(); //DB 트래픽 발생 안함.
+	dd.read(0);
+}
+
+TEST(TestDeviceDriver, TestReadValue) {
+
+	FlashMemoryDeviceMock mockhardware;
+	DeviceDriver dd(&mockhardware);
+
+	EXPECT_CALL(mockhardware, read(0))
+		.Times(5)
+		.WillRepeatedly(Return(1));
+
+	int ret = dd.read(0);
+
+	EXPECT_EQ(1, ret);
 }
