@@ -7,7 +7,6 @@ public:
     DeviceDriver(FlashMemoryDevice* hardware);
     int read(long address);
     void write(long address, int data);
-    void assertReadError(bool ret);
 protected:
     FlashMemoryDevice* m_hardware;
 };
